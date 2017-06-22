@@ -167,6 +167,7 @@ STATIC const mp_obj_type_t lwip_slip_type = {
 // Table to convert lwIP err_t codes to socket errno codes, from the lwIP
 // socket API.
 
+#if LWIP_VERSION_MAJOR == 1
 // Extension to lwIP error codes
 #define _ERR_BADF -16
 // TODO: We just know that change happened somewhere between 1.4.0 and 1.4.1,
@@ -192,7 +193,7 @@ static const int error_lookup_table[] = {
     MP_EALREADY,      /* ERR_ISCONN     -15     Already connected.       */
     MP_EBADF,         /* _ERR_BADF      -16     Closed socket (null pcb) */
 };
-#else
+#else // lwIPv1 >= 0x01040100
 static const int error_lookup_table[] = {
     0,                /* ERR_OK          0      No error, everything OK. */
     MP_ENOMEM,        /* ERR_MEM        -1      Out of memory error.     */
@@ -213,7 +214,34 @@ static const int error_lookup_table[] = {
     -1,               /* ERR_IF         -15     Low-level netif error    */
     MP_EBADF,         /* _ERR_BADF      -16     Closed socket (null pcb) */
 };
-#endif
+#endif // lwIPv1 >= 0x01040100
+#else // lwIPv2
+// Extension to lwIP error codes
+#define _ERR_BADF -17
+static const int error_lookup_table[] = {
+    0,                /* ERR_OK          0      No error, everything OK. */
+    MP_ENOMEM,        /* ERR_MEM        -1      Out of memory error.     */
+    MP_ENOBUFS,       /* ERR_BUF        -2      Buffer error.            */
+    MP_EWOULDBLOCK,   /* ERR_TIMEOUT    -3      Timeout                  */
+    MP_EHOSTUNREACH,  /* ERR_RTE        -4      Routing problem.         */
+    MP_EINPROGRESS,   /* ERR_INPROGRESS -5      Operation in progress    */
+    MP_EINVAL,        /* ERR_VAL        -6      Illegal value.           */
+    MP_EWOULDBLOCK,   /* ERR_WOULDBLOCK -7      Operation would block.   */
+
+    MP_EADDRINUSE,    /* ERR_USE        -8      Address in use.          */
+    MP_EALREADY,      /* ERR_ALREADY    -9      Already connected.       */
+    MP_EALREADY,      /* ERR_ISCONN	-10	Conn already established */
+    MP_ENOTCONN,      /* ERR_CONN       -11     Not connected            */
+    -1,               /* ERR_IF         -12     Low-level netif error    */
+    
+    MP_ECONNABORTED,  /* ERR_ABRT       -13     Connection aborted.      */
+    MP_ECONNRESET,    /* ERR_RST        -14     Connection reset.        */
+    MP_ENOTCONN,      /* ERR_CLSD       -15     Connection closed.       */
+    MP_EIO,           /* ERR_ARG        -16     Illegal argument.        */
+    MP_EBADF,         /* _ERR_BADF      -17     Closed socket (null pcb) */
+};
+#endif // lwIPv2
+
 
 /*******************************************************************************/
 // The socket object provided by lwip.socket.
@@ -272,7 +300,11 @@ static inline void exec_user_callback(lwip_socket_obj_t *socket) {
 
 // Callback for incoming UDP packets. We simply stash the packet and the source address,
 // in case we need it for recvfrom.
+#if LWIP_VERSION_MAJOR == 1
 STATIC void _lwip_udp_incoming(void *arg, struct udp_pcb *upcb, struct pbuf *p, ip_addr_t *addr, u16_t port) {
+#else
+STATIC void _lwip_udp_incoming(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port) {
+#endif
     lwip_socket_obj_t *socket = (lwip_socket_obj_t*)arg;
 
     if (socket->incoming.pbuf != NULL) {
@@ -1256,7 +1288,11 @@ typedef struct _getaddrinfo_state_t {
 } getaddrinfo_state_t;
 
 // Callback for incoming DNS requests.
+#if LWIP_VERSION_MAJOR == 1
 STATIC void lwip_getaddrinfo_cb(const char *name, ip_addr_t *ipaddr, void *arg) {
+#else
+STATIC void lwip_getaddrinfo_cb(const char *name, const ip_addr_t *ipaddr, void *arg) {
+#endif
     getaddrinfo_state_t *state = arg;
     if (ipaddr != NULL) {
         state->status = 1;

@@ -38,6 +38,7 @@
 #include "espconn.h"
 #include "spi_flash.h"
 #include "ets_alt_task.h"
+#include "lwip/err.h"
 #include "lwip/dns.h"
 
 #define MODNETWORK_INCLUDE_CONSTANTS (1)
@@ -223,7 +224,11 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(esp_isconnected_obj, esp_isconnected);
 STATIC mp_obj_t esp_ifconfig(size_t n_args, const mp_obj_t *args) {
     wlan_if_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     struct ip_info info;
+#if LWIP_VERSION_MAJOR == 1
     ip_addr_t dns_addr;
+#else
+    const ip_addr_t* dns_addr;
+#endif
     wifi_get_ip_info(self->if_id, &info);
     if (n_args == 1) {
         // get
@@ -264,7 +269,11 @@ STATIC mp_obj_t esp_ifconfig(size_t n_args, const mp_obj_t *args) {
           nlr_raise(mp_obj_new_exception_msg(&mp_type_OSError,
             "wifi_set_ip_info() failed"));
         }
+#if LWIP_VERSION_MAJOR == 1
         dns_setserver(0, &dns_addr);
+#else
+        dns_setserver(0, dns_addr);
+#endif
         if (restart_dhcp_server) {
             wifi_softap_dhcps_start();
         }

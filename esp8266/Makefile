@@ -7,6 +7,7 @@ MICROPY_PY_USSL = 1
 MICROPY_SSL_AXTLS = 1
 MICROPY_FATFS = 1
 MICROPY_PY_BTREE = 1
+ESP_LWIP2 ?= 0
 
 FROZEN_DIR ?= scripts
 FROZEN_MPY_DIR ?= modules
@@ -26,6 +27,9 @@ INC += -I.
 INC += -I..
 INC += -I../stmhal
 INC += -I$(BUILD)
+ifneq (ESP_LWIP2,0)
+INC += -I$(ESP_SDK)/include/lwip2
+endif
 INC += -I$(ESP_SDK)/include
 
 # UART for "os" messages. 0 is normal UART as used by MicroPython REPL,
@@ -41,9 +45,14 @@ CFLAGS_XTENSA = -fsingle-precision-constant -Wdouble-promotion \
 CFLAGS = $(INC) -Wall -Wpointer-arith -Werror -std=gnu99 -nostdlib -DUART_OS=$(UART_OS) \
 	$(CFLAGS_XTENSA) $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA)
 
+ESP_LWIP_LIB = lwip_open
+ifneq (ESP_LWIP2,0)
+ESP_LWIP_LIB = lwip2
+endif
+
 LDSCRIPT = esp8266.ld
 LDFLAGS = -nostdlib -T $(LDSCRIPT) -Map=$(@:.elf=.map) --cref
-LIBS = -L$(ESP_SDK)/lib -lmain -ljson -llwip_open -lpp -lnet80211 -lwpa -lphy -lnet80211 $(LDFLAGS_MOD)
+LIBS = -L$(ESP_SDK)/lib -lmain -ljson -l$(ESP_LWIP_LIB) -lpp -lnet80211 -lwpa -lphy -lnet80211 $(LDFLAGS_MOD)
 
 LIBGCC_FILE_NAME = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 LIBS += -L$(dir $(LIBGCC_FILE_NAME)) -lgcc
