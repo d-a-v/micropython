@@ -38,6 +38,7 @@
 #include "espconn.h"
 #include "spi_flash.h"
 #include "ets_alt_task.h"
+#include "lwip/init.h"	// LWIP_VERSION_*
 #include "lwip/err.h"
 #include "lwip/dns.h"
 

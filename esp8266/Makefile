@@ -9,6 +9,8 @@ MICROPY_FATFS = 1
 MICROPY_PY_BTREE = 1
 ESP_LWIP2 ?= 0
 
+$(warning $(shell echo ESP_LWIP2=$(ESP_LWIP2)))
+
 FROZEN_DIR ?= scripts
 FROZEN_MPY_DIR ?= modules
 
@@ -27,7 +29,7 @@ INC += -I.
 INC += -I..
 INC += -I../stmhal
 INC += -I$(BUILD)
-ifneq (ESP_LWIP2,0)
+ifneq ($(ESP_LWIP2),0)
 INC += -I$(ESP_SDK)/include/lwip2
 endif
 INC += -I$(ESP_SDK)/include
@@ -46,7 +48,7 @@ CFLAGS = $(INC) -Wall -Wpointer-arith -Werror -std=gnu99 -nostdlib -DUART_OS=$(U
 	$(CFLAGS_XTENSA) $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA)
 
 ESP_LWIP_LIB = lwip_open
-ifneq (ESP_LWIP2,0)
+ifneq ($(ESP_LWIP2),0)
 ESP_LWIP_LIB = lwip2
 endif
 

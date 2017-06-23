@@ -39,12 +39,16 @@
 #include "lib/netutils/netutils.h"
 
 #include "lwip/init.h"
-#include "lwip/timers.h"
 #include "lwip/tcp.h"
 #include "lwip/udp.h"
 //#include "lwip/raw.h"
 #include "lwip/dns.h"
+#if LWIP_VERSION_MAJOR == 1
+#include "lwip/timers.h"
 #include "lwip/tcp_impl.h"
+#else
+#include "lwip/priv/tcp_priv.h"	// tcp_debug_print_pcbs()
+#endif
 
 #if 0 // print debugging info
 #define DEBUG_printf DEBUG_printf
